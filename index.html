@@ -3,52 +3,106 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bulk Gmail Link Generator (standalone)</title>
+  <title>Bulk Gmail Link Generator</title>
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;max-width:980px;margin:24px auto;padding:0 16px}
-    label{display:block;margin:10px 0 6px}
-    input[type="text"], textarea, input[type="number"]{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px}
-    textarea{min-height:140px}
-    .small{font-size:0.9em;color:#555}
-    .row{display:flex;gap:8px}
-    .row > *{flex:1}
-    .link-row{margin-bottom:14px}
-    .lnk{word-break:break-all}
-    button{padding:8px 12px;border-radius:6px;border:1px solid #0b5fff;background:#0b66ff;color:#fff;cursor:pointer}
-    button.secondary{background:#eee;color:#111;border:1px solid #ccc}
-    .invalid{color:#b80;}
-    .good{color:green}
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --muted:#6b7280; --primary:#2563eb; --accent:#111827; --radius:10px;
+      --shadow: 0 6px 18px rgba(17,24,39,0.08);
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;margin:0;background:var(--bg);color:var(--accent)}
+    .container{max-width:980px;margin:32px auto;padding:24px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    header h1{margin:0;font-size:20px}
+    header p{margin:0;color:var(--muted);font-size:13px}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+    form .row{display:flex;gap:12px}
+    label{display:block;margin:12px 0 6px;font-size:13px;color:var(--muted)}
+    input[type="text"], textarea, input[type="number"]{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;font-size:14px}
+    textarea{min-height:140px;resize:vertical}
+    .controls{display:flex;gap:10px;margin-top:14px}
+    button{padding:10px 14px;border-radius:8px;border:0;background:var(--primary);color:#fff;font-weight:600;cursor:pointer}
+    button.secondary{background:#eef2ff;color:var(--primary);border:1px solid #dde8ff}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:14px;color:var(--muted);font-size:13px}
+
+    .results{margin-top:20px}
+    .summary{background:#fff;padding:12px;border-radius:8px;border:1px solid #f0f3f7}
+    .link-row{padding:12px;border-bottom:1px solid #f3f6fa;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .link-row:last-child{border-bottom:none}
+    .lnk{color:var(--primary);word-break:break-all;text-decoration:none}
+    .copy-btn{background:#f3f4f6;border:1px solid #e5e7eb;color:#111;padding:8px 10px;border-radius:7px;cursor:pointer}
+    .message{margin-top:12px;padding:10px;border-radius:8px;font-size:14px}
+    .message.error{background:#fff5f5;color:#7f1d1d;border:1px solid #fee2e2}
+    .message.info{background:#f8fafc;color:#0f172a;border:1px solid #e6eef8}
+    footer{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}
+
+    @media (max-width:640px){.row{flex-direction:column}}
   </style>
-  <!-- JSZip and FileSaver for optional ZIP download of per-batch HTML files -->
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 <body>
-  <h1>Bulk Gmail Link Generator (single-file)</h1>
-  <p class="small">Open this file in your browser (double-click index.html). No server or terminal needed. This page accepts a CSV single-column (one email per line), validates addresses, splits into batches, and produces Gmail composer links you can open and then click Send.</p>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Bulk Gmail Link Generator</h1>
+        <p>Generate Gmail compose links for batched recipient lists (open the links and send from Gmail).</p>
+      </div>
+    </header>
 
-  <label>Title (UI only): <input type="text" id="title" placeholder="optional" /></label>
-  <label>Subject: <input type="text" id="subject" /></label>
-  <label>Body: <textarea id="body" placeholder="Email body (plain text)."/></textarea></label>
+    <div class="card">
+      <form id="mainForm" onsubmit="return false">
+        <label>Title (UI only)</label>
+        <input type="text" id="title" placeholder="Optional" />
 
-  <label>Upload CSV (single column of emails): <input type="file" id="csvfile" accept=".csv,text/csv" /></label>
-  <div class="small">Or paste emails (one per line) into the box below:</div>
-  <label>Recipients (one email per line): <textarea id="receivers" placeholder="alice@example.com\nbob@example.com"></textarea></label>
+        <div class="row">
+          <div style="flex:1">
+            <label>Subject</label>
+            <input type="text" id="subject" placeholder="Email subject" />
+          </div>
+          <div style="width:160px">
+            <label>Batch size</label>
+            <input type="number" id="batch_size" value="500" min="1" max="1000" />
+          </div>
+        </div>
 
-  <label>Batch size (how many recipients per generated link): <input type="number" id="batch_size" value="500" min="1" max="1000" /></label>
-  <div class="small">Notes: All recipients will be placed in the "To" field. Maximum accepted recipients: 50,000. Gmail may still limit recipients per message or block large-volume sending.</div>
+        <label>Body</label>
+        <textarea id="body" placeholder="Message body (plain text)"></textarea>
 
-  <div style="margin-top:12px" class="row">
-    <button id="generate">Generate links</button>
-    <button id="downloadZip" class="secondary">Download ZIP of per-batch HTML</button>
-    <button id="copyAll" class="secondary">Copy all links</button>
+        <div style="display:flex;gap:12px;align-items:flex-start;margin-top:12px">
+          <div style="flex:1">
+            <label>Upload CSV (one email per line)</label>
+            <input type="file" id="csvfile" accept=".csv,text/csv" />
+          </div>
+          <div style="width:24px"></div>
+        </div>
+
+        <label>Recipients (one email per line)</label>
+        <textarea id="receivers" placeholder="alice@example.com\nbob@example.com"></textarea>
+
+        <div class="controls">
+          <button id="generate">Generate links</button>
+          <button id="downloadZip" class="secondary">Download ZIP</button>
+          <button id="copyAll" class="secondary">Copy all links</button>
+        </div>
+
+        <div class="meta">
+          <div>Maximum accepted recipients: 50,000</div>
+          <div>All recipients will be placed in the To field</div>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="results">
+      <div id="messageArea"></div>
+      <div id="summary" class="summary" style="display:none"></div>
+      <div id="links"></div>
+    </div>
+
+    <footer>Designed for quick, manual bulk sending workflows.</footer>
   </div>
 
-  <hr />
-  <div id="summary"></div>
-  <div id="invalidList"></div>
-  <div id="links"></div>
-
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script>
 (function(){
   const MAX_RECIPIENTS = 50000;
@@ -59,54 +113,32 @@
   const copyAllBtn = document.getElementById('copyAll');
   const linksEl = document.getElementById('links');
   const summaryEl = document.getElementById('summary');
-  const invalidListEl = document.getElementById('invalidList');
+  const messageArea = document.getElementById('messageArea');
 
-  // A reasonably strict email regex (not full RFC5322, but practical)
   const emailRegex = /^[a-zA-Z0-9_.+\-']+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$/;
 
   function cleanAddresses(text){
-    // normalize separators and split lines
     if(!text) return [];
     text = text.replace(/[;,]+/g,'\n');
     const parts = text.split(/\s*\n\s*/).map(s=>s.trim()).filter(Boolean);
-    // dedupe preserving order
     const seen = new Set();
     const out = [];
-    for(const p of parts){
-      if(!seen.has(p)){
-        seen.add(p);
-        out.push(p);
-      }
-    }
+    for(const p of parts){ if(!seen.has(p)){ seen.add(p); out.push(p); } }
     return out;
   }
 
   function parseCSVContent(content){
-    // Accept files where each line is one email. If there is a header like "email", skip it if not an email.
     const lines = content.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
     if(lines.length === 0) return [];
-    // If first line contains non-email (like 'email' or 'Email') and others look like emails, skip header
-    if(lines.length>1 && !emailRegex.test(lines[0]) && emailRegex.test(lines[1])){
-      lines.shift();
-    }
+    if(lines.length>1 && !emailRegex.test(lines[0]) && emailRegex.test(lines[1])) lines.shift();
     return lines;
   }
 
-  function chunkList(arr, n){
-    const out = [];
-    for(let i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n));
-    return out;
-  }
-
-  function quotePlus(s){
-    return encodeURIComponent(s).replace(/%20/g,'+');
-  }
+  function chunkList(arr, n){ const out = []; for(let i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n)); return out; }
+  function quotePlus(s){ return encodeURIComponent(s).replace(/%20/g,'+'); }
 
   function buildGmailComposeLink(toList, subject, body){
-    // Put all recipients into the 'to' parameter (comma-separated). No BCC.
-    let to_field = '';
-    if(toList.length === 0) to_field = '';
-    else to_field = toList.join(',');
+    let to_field = toList.length ? toList.join(',') : '';
     const params = [];
     if(to_field) params.push('to=' + quotePlus(to_field));
     if(subject) params.push('su=' + quotePlus(subject));
@@ -118,18 +150,15 @@
     const f = evt.target.files && evt.target.files[0];
     if(!f) return;
     const reader = new FileReader();
-    reader.onload = function(e){
-      const content = e.target.result;
-      const parsed = parseCSVContent(content);
-      receiversEl.value = parsed.join('\n');
-    };
+    reader.onload = function(e){ const content = e.target.result; const parsed = parseCSVContent(content); receiversEl.value = parsed.join('\n'); };
     reader.readAsText(f);
   });
 
+  function showMessage(type, text){ messageArea.innerHTML = '<div class="message '+(type||'info')+'">'+escapeHTML(text)+'</div>'; }
+  function clearMessage(){ messageArea.innerHTML = ''; }
+
   generateBtn.addEventListener('click', function(){
-    linksEl.innerHTML = '';
-    invalidListEl.innerHTML = '';
-    summaryEl.textContent = '';
+    clearMessage(); linksEl.innerHTML = ''; summaryEl.style.display='none'; summaryEl.innerHTML='';
 
     const title = document.getElementById('title').value.trim();
     const subject = document.getElementById('subject').value.trim();
@@ -137,40 +166,20 @@
     const batch_size = Math.max(1, parseInt(document.getElementById('batch_size').value,10) || 500);
 
     let recipients = cleanAddresses(receiversEl.value);
-    if(recipients.length === 0){
-      alert('No recipients provided. Paste emails (one per line) or upload a CSV with one email per line.');
-      return;
-    }
-    if(recipients.length > MAX_RECIPIENTS){
-      alert('Too many recipients. Limit is ' + MAX_RECIPIENTS + '.');
-      recipients = recipients.slice(0, MAX_RECIPIENTS);
-    }
+    if(recipients.length === 0){ showMessage('error','Please provide recipient emails (paste or upload a CSV).'); return; }
+    if(recipients.length > MAX_RECIPIENTS){ recipients = recipients.slice(0, MAX_RECIPIENTS); }
 
-    const invalid = [];
-    const valid = [];
-    for(const r of recipients){
-      if(emailRegex.test(r)) valid.push(r);
-      else invalid.push(r);
-    }
+    const invalid = []; const valid = [];
+    for(const r of recipients){ if(emailRegex.test(r)) valid.push(r); else invalid.push(r); }
 
-    summaryEl.innerHTML = '<p>Total provided: ' + recipients.length + '. Valid: ' + valid.length + '. Invalid: ' + invalid.length + '.</p>';
+    summaryEl.style.display='block';
+    summaryEl.innerHTML = '<strong>Total:</strong> ' + recipients.length + ' — <strong>Valid:</strong> ' + valid.length + ' — <strong>Invalid:</strong> ' + invalid.length + '.';
 
-    if(invalid.length){
-      const d = document.createElement('div');
-      d.className='invalid';
-      d.innerHTML = '<strong>Invalid addresses (not used):</strong><br/>' + invalid.map(x=>'<code>'+escapeHTML(x)+'</code>').join('<br/>');
-      invalidListEl.appendChild(d);
-    }
-
-    if(valid.length === 0){
-      alert('No valid recipient emails found. Fix the list and try again.');
-      return;
-    }
+    if(valid.length === 0){ showMessage('error','No valid recipient emails found.'); return; }
 
     const batches = chunkList(valid, batch_size);
     const allLinks = [];
 
-    const list = document.createElement('div');
     for(let i=0;i<batches.length;i++){
       const batch = batches[i];
       const link = buildGmailComposeLink(batch, subject, body);
@@ -178,57 +187,33 @@
 
       const box = document.createElement('div');
       box.className = 'link-row';
-      box.innerHTML = '<strong>Batch ' + (i+1) + ' ('+batch.length+' recipients)</strong><br/>' +
-        '<a class="lnk" href="'+link+'" target="_blank">Open Gmail composer (To: '+escapeHTML(batch[0]) + ')</a> ' +
-        '<button data-link="'+link+'">Copy link</button>';
-      list.appendChild(box);
+      const left = document.createElement('div');
+      left.innerHTML = '<div><strong>Batch '+(i+1)+'</strong> <span style="color:var(--muted);">('+batch.length+' recipients)</span></div>'+
+                       '<a class="lnk" href="'+link+'" target="_blank">Open Gmail composer</a>';
+      const right = document.createElement('div');
+      const cb = document.createElement('button'); cb.className='copy-btn'; cb.textContent='Copy link'; cb.setAttribute('data-link',link);
+      right.appendChild(cb);
+      box.appendChild(left); box.appendChild(right);
+      linksEl.appendChild(box);
     }
 
-    linksEl.appendChild(list);
+    linksEl.scrollIntoView({behavior:'smooth'});
 
-    // attach copy handlers
     linksEl.querySelectorAll('button[data-link]').forEach(btn=>{
       btn.addEventListener('click', function(){
         const l = btn.getAttribute('data-link');
-        navigator.clipboard.writeText(l).then(()=>{
-          const old = btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=old,1200);
-        }).catch(()=>{ alert('Copy failed. You can copy the link text manually.'); });
+        navigator.clipboard.writeText(l).then(()=>{ btn.textContent='Copied'; setTimeout(()=>btn.textContent='Copy link',1200); }).catch(()=>{ showMessage('info','Copy failed — please copy the link manually.'); });
       });
     });
 
-    // update copy all button behaviour
-    copyAllBtn.onclick = function(){
-      if(allLinks.length === 0){ alert('No links to copy'); return; }
-      navigator.clipboard.writeText(allLinks.join('\n')).then(()=> alert('All links copied to clipboard'), ()=> alert('Copy failed'));
-    };
+    copyAllBtn.onclick = function(){ if(allLinks.length===0){ showMessage('info','No links to copy.'); return; } navigator.clipboard.writeText(allLinks.join('\n')).then(()=>{ showMessage('info','All links copied to clipboard.'); }).catch(()=>{ showMessage('info','Copy failed — please try manually.'); }); };
 
-    // update downloadZip behaviour
-    downloadZipBtn.onclick = function(){
-      if(allLinks.length === 0){ alert('No links to download'); return; }
-      const zip = new JSZip();
-      for(let i=0;i<allLinks.length;i++){
-        const html = generateBatchHTML(allLinks[i], i+1, title || 'Bulk mail batch '+(i+1));
-        zip.file('batch-'+String(i+1).padStart(3,'0')+'.html', html);
-      }
-      zip.generateAsync({type:'blob'}).then(function(content){
-        saveAs(content, 'bulk-gmail-links.zip');
-      });
-    };
+    downloadZipBtn.onclick = function(){ if(allLinks.length===0){ showMessage('info','No links available for download.'); return; } const zip = new JSZip(); for(let i=0;i<allLinks.length;i++){ const html = generateBatchHTML(allLinks[i], i+1, title || ('Batch '+(i+1))); zip.file('batch-'+String(i+1).padStart(3,'0')+'.html', html); } zip.generateAsync({type:'blob'}).then(function(content){ saveAs(content, 'bulk-gmail-links.zip'); }); };
 
-  }); // end generate click
+  }); // generate
 
-  function generateBatchHTML(link, batchNumber, title){
-    const escTitle = escapeHTML(title || 'Open Gmail');
-    return '<!doctype html>\n<html><head><meta charset="utf-8"><title>'+escTitle+'</title></head><body>\n' +
-      '<h1>'+escTitle+'</h1>\n' +
-      '<p><a href="'+link+'" target="_blank">Open Gmail composer for batch '+batchNumber+'</a></p>\n' +
-      '<p>If the link does not open, copy-paste the following URL into your browser:\n<pre>'+escapeHTML(link)+'</pre></p>\n' +
-      '</body></html>';
-  }
-
-  function escapeHTML(s){
-    return (s+'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];});
-  }
+  function generateBatchHTML(link, batchNumber, title){ const escTitle = escapeHTML(title||'Open Gmail'); return '<!doctype html>\n<html><head><meta charset="utf-8"><title>'+escTitle+'</title></head><body>\n<h1>'+escTitle+'</h1>\n<p><a href="'+link+'" target="_blank">Open Gmail composer for batch '+batchNumber+'</a></p>\n</body></html>'; }
+  function escapeHTML(s){ return (s+'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];}); }
 
 })();
 </script>
