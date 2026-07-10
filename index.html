@@ -27,7 +27,6 @@
   <h1>Bulk Gmail Link Generator (single-file)</h1>
   <p class="small">Open this file in your browser (double-click index.html). No server or terminal needed. This page accepts a CSV single-column (one email per line), validates addresses, splits into batches, and produces Gmail composer links you can open and then click Send.</p>
 
-  <label>Sender email (informational): <input type="text" id="sender" placeholder="optional — user must choose this From in Gmail" /></label>
   <label>Title (UI only): <input type="text" id="title" placeholder="optional" /></label>
   <label>Subject: <input type="text" id="subject" /></label>
   <label>Body: <textarea id="body" placeholder="Email body (plain text)."/></textarea></label>
@@ -36,7 +35,7 @@
   <div class="small">Or paste emails (one per line) into the box below:</div>
   <label>Recipients (one email per line): <textarea id="receivers" placeholder="alice@example.com\nbob@example.com"></textarea></label>
 
-  <label>Batch size (how many recipients per generated link): <input type="number" id="batch_size" value="100" min="1" max="1000" /></label>
+  <label>Batch size (how many recipients per generated link): <input type="number" id="batch_size" value="500" min="1" max="1000" /></label>
   <div class="small">Notes: We place the first recipient in "To" and the rest in BCC. Maximum accepted recipients: 50,000. Gmail may still limit recipients per message or block large-volume sending.</div>
 
   <div style="margin-top:12px" class="row">
@@ -134,11 +133,10 @@
     invalidListEl.innerHTML = '';
     summaryEl.textContent = '';
 
-    const sender = document.getElementById('sender').value.trim();
     const title = document.getElementById('title').value.trim();
     const subject = document.getElementById('subject').value.trim();
     const body = document.getElementById('body').value.trim();
-    const batch_size = Math.max(1, parseInt(document.getElementById('batch_size').value,10) || 100);
+    const batch_size = Math.max(1, parseInt(document.getElementById('batch_size').value,10) || 500);
 
     let recipients = cleanAddresses(receiversEl.value);
     if(recipients.length === 0){
