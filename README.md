@@ -1,5 +1,8 @@
 # Bulk-mail
 
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)  
+[Contributors ➜](CONTRIBUTORS.md)
+
 A professional single-file Bulk Gmail Link Generator intended for manual workflows.
 
 Features
@@ -17,3 +20,6 @@ Usage
 Behavior
 - All recipients are placed in the To field; batch size is configurable and defaults to 500.
 
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
