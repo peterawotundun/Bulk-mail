@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Generated Links</title>
+    <style>
+      body { font-family: Arial, sans-serif; }
+      .link-row { margin-bottom:12px; }
+      .lnk { word-break:break-all; }
+      button.copy { margin-left:8px; }
+    </style>
+  </head>
+  <body>
+    <h1>Generated links</h1>
+    <p>Total recipients: {{ total }} — batch size: {{ batch_size }} — links: {{ links|length }}</p>
+    <ul>
+      {% for item in links %}
+      <li class="link-row">
+        <strong>Batch {{ item.batch_number }} ({{ item.count }} recipients)</strong><br/>
+        <a class="lnk" href="{{ item.link }}" target="_blank">Open Gmail composer (To: {{ item.preview_to }})</a>
+        <button class="copy" data-link="{{ item.link }}">Copy link</button>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <script>
+      document.querySelectorAll('button.copy').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          const link = btn.getAttribute('data-link');
+          navigator.clipboard.writeText(link).then(function(){
+            btn.textContent = 'Copied!';
+            setTimeout(()=>btn.textContent='Copy link',1500);
+          }, function(){
+            alert('Copy failed. Please copy link manually.');
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
