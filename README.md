@@ -9,7 +9,7 @@ What the standalone `index.html` does
 - Accepts a CSV file (single-column: one email per line) or pasted emails (one per line).
 - Validates email addresses with a practical client-side regex and deduplicates them.
 - Splits recipients into batches (configurable batch size, default 500).
-- Generates Gmail compose links for each batch (first recipient in To, rest in BCC).
+- Generates Gmail compose links for each batch (all recipients placed in the To field).
 - Lets you copy links, copy all links, or download a ZIP containing one HTML file per batch with a button to open the composer.
 
 How to use `index.html` (no terminal required)

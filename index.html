@@ -24,7 +24,7 @@
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 <body>
-  <h1>Bulk Gmail Link Generator</h1>
+  <h1>Bulk Gmail Link Generator (single-file)</h1>
   <p class="small">Open this file in your browser (double-click index.html). No server or terminal needed. This page accepts a CSV single-column (one email per line), validates addresses, splits into batches, and produces Gmail composer links you can open and then click Send.</p>
 
   <label>Title (UI only): <input type="text" id="title" placeholder="optional" /></label>
@@ -36,7 +36,7 @@
   <label>Recipients (one email per line): <textarea id="receivers" placeholder="alice@example.com\nbob@example.com"></textarea></label>
 
   <label>Batch size (how many recipients per generated link): <input type="number" id="batch_size" value="500" min="1" max="1000" /></label>
-  <div class="small">Notes: We place the first recipient in "To" and the rest in BCC. Maximum accepted recipients: 50,000. Gmail may still limit recipients per message or block large-volume sending.</div>
+  <div class="small">Notes: All recipients will be placed in the "To" field. Maximum accepted recipients: 50,000. Gmail may still limit recipients per message or block large-volume sending.</div>
 
   <div style="margin-top:12px" class="row">
     <button id="generate">Generate links</button>
@@ -103,16 +103,14 @@
   }
 
   function buildGmailComposeLink(toList, subject, body){
+    // Put all recipients into the 'to' parameter (comma-separated). No BCC.
     let to_field = '';
-    let bcc_field = '';
     if(toList.length === 0) to_field = '';
-    else if(toList.length === 1) to_field = toList[0];
-    else{ to_field = toList[0]; bcc_field = toList.slice(1).join(','); }
+    else to_field = toList.join(',');
     const params = [];
     if(to_field) params.push('to=' + quotePlus(to_field));
     if(subject) params.push('su=' + quotePlus(subject));
     if(body) params.push('body=' + quotePlus(body));
-    if(bcc_field) params.push('bcc=' + quotePlus(bcc_field));
     return 'https://mail.google.com/mail/?view=cm&fs=1&' + params.join('&');
   }
 
