@@ -36,6 +36,9 @@
     .message.info{background:#f8fafc;color:#0f172a;border:1px solid #e6eef8}
     footer{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}
 
+    .promo{margin-top:18px;padding:12px;border-radius:8px;background:linear-gradient(90deg,#eef2ff, #f8fafc);border:1px solid #e6eef8;display:flex;justify-content:space-between;align-items:center}
+    .promo a{color:var(--primary);text-decoration:none;font-weight:700}
+
     @media (max-width:640px){.row{flex-direction:column}}
   </style>
 </head>
@@ -69,14 +72,14 @@
 
         <div style="display:flex;gap:12px;align-items:flex-start;margin-top:12px">
           <div style="flex:1">
-            <label>Upload CSV (one email per line)</label>
+            <label>Upload CSV (one email per line or comma-separated)</label>
             <input type="file" id="csvfile" accept=".csv,text/csv" />
           </div>
           <div style="width:24px"></div>
         </div>
 
-        <label>Recipients (one email per line)</label>
-        <textarea id="receivers" placeholder="alice@example.com\nbob@example.com"></textarea>
+        <label>Recipients (one email per line or comma-separated)</label>
+        <textarea id="receivers" placeholder="alice@example.com\nbob@example.com,carol@example.com"></textarea>
 
         <div class="controls">
           <button id="generate">Generate links</button>
@@ -96,9 +99,18 @@
       <div id="messageArea"></div>
       <div id="summary" class="summary" style="display:none"></div>
       <div id="links"></div>
+
+      <div class="promo">
+        <div>
+          <div style="font-weight:700">Try Sendly AI</div>
+          <div style="color:var(--muted);font-size:13px">Smarter email workflows — templates, scheduling, and AI-assisted writing.</div>
+        </div>
+        <div><a href="https://sendlyai.com" target="_blank">Visit sendlyai.com →</a></div>
+      </div>
+
     </div>
 
-    <footer>Designed for quick, manual bulk sending workflows.</footer>
+    <footer>Made with ❤️ by Peter Awotundun — <a href="https://sendlyai.com" target="_blank" style="color:var(--primary);text-decoration:none;font-weight:600">Sendly AI</a></footer>
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -119,6 +131,7 @@
 
   function cleanAddresses(text){
     if(!text) return [];
+    // normalize separators (commas/semicolons/newlines) into individual addresses
     text = text.replace(/[;,]+/g,'\n');
     const parts = text.split(/\s*\n\s*/).map(s=>s.trim()).filter(Boolean);
     const seen = new Set();
@@ -128,10 +141,16 @@
   }
 
   function parseCSVContent(content){
-    const lines = content.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-    if(lines.length === 0) return [];
-    if(lines.length>1 && !emailRegex.test(lines[0]) && emailRegex.test(lines[1])) lines.shift();
-    return lines;
+    // Split lines, then split each line by commas/semicolons to accept comma-separated emails in CSV cells
+    const rawLines = content.split(/\r?\n/);
+    const parts = [];
+    for(const l of rawLines){
+      const subs = l.split(/[,;]+/).map(s=>s.trim()).filter(Boolean);
+      for(const s of subs) parts.push(s);
+    }
+    if(parts.length === 0) return [];
+    if(parts.length>1 && !emailRegex.test(parts[0]) && emailRegex.test(parts[1])) parts.shift();
+    return parts;
   }
 
   function chunkList(arr, n){ const out = []; for(let i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n)); return out; }
